@@ -3,48 +3,87 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    paddingHorizontal: 30,
     justifyContent: 'center',
+    backgroundColor: '#0e0e0e',
   },
-  headerText: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subtitle: {
-    color: '#888',
+  logoContainer: {
+    alignItems: 'center',
     marginBottom: 40,
   },
-  inputContainer: {
-    width: '80%',
+  logo: {
+    width: 70,
+    height: 70,
+  },
+  logoText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
     marginBottom: 30,
   },
-  input: {
-    backgroundColor: '#2a2a2a',
-    color: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-  },
-  button: {
-    backgroundColor: '#ff4b2b',
-    width: '80%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
+  inputGroup: {
     marginBottom: 20,
   },
-  buttonText: {
+  label: {
     color: '#fff',
+    marginBottom: 6,
+    fontSize: 14,
+  },
+  input: {
+    backgroundColor: '#2A303E',
+    color: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#3A4150',
+  },
+  signupButton: {
+    backgroundColor: '#ff4b2b',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  signupButtonText: {
+    color: '#fff',
+    fontWeight: '600',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   loginText: {
+    textAlign: 'center',
     color: '#888',
+    marginTop: 10,
   },
   loginLink: {
     color: '#ff4b2b',
     fontWeight: '600',
   },
+  termsContainer: {
+    marginTop: 20,
+  },
+  termsText: {
+    color: '#888',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: '#ff4b2b',
+  },
+
+   errorLabel: {
+  color: 'red',
+  marginTop: 4,
+  fontSize: 12,
+   },
+
+  
 });

@@ -7,6 +7,21 @@ export default StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0e0e0e',
   },
+  backButtonContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 100,
+  },
   logoContainer: {
     alignItems: 'center',
     marginBottom: 40,
@@ -30,11 +45,13 @@ export default StyleSheet.create({
     fontSize: 14,
   },
   input: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#2A303E',
     color: '#fff',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#3A4150',
   },
   forgotContainer: {
     alignItems: 'flex-end',
@@ -88,4 +105,9 @@ export default StyleSheet.create({
     color: '#ff4b2b',
     fontWeight: '600',
   },
+  errorLabel: {
+  color: 'red',
+  marginTop: 4,
+  fontSize: 12,
+},
 });

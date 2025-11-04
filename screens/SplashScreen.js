@@ -21,7 +21,7 @@ export default function SplashScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Animated.Image
-        source={require('../assets/rev-logo.png')}
+        source={require('../assets/logo2.png')}
         style={[styles.logo, { opacity: fadeAnim }]}
       />
       <Animated.Text style={[styles.text, { opacity: fadeAnim }]}>REV</Animated.Text>
@@ -32,7 +32,7 @@ export default function SplashScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0e0e0e',
+    backgroundColor: '#1C2433',
     alignItems: 'center',
     justifyContent: 'center',
   },

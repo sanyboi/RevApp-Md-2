@@ -1,158 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-import * as Facebook from 'expo-auth-session/providers/facebook';
-import * as Google from 'expo-auth-session/providers/google';
-import { GoogleAuthProvider, FacebookAuthProvider, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import styles from './LoginStyles';
-
-WebBrowser.maybeCompleteAuthSession();
+import { useGoogleAuth } from '../config/googleAuth'; // ✅ uses your expo-auth-session logic
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // --- Generate redirect URI based on platform ---
-  const redirectUri = AuthSession.makeRedirectUri({
-    scheme: 'revapp',               // custom scheme
-    useProxy: Platform.select({ ios: true, android: true, default: false }), // proxy for Expo Go iOS/Android
-  });
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [googleError, setGoogleError] = useState('');
 
-  useEffect(() => {
-    console.log('🚀 Redirect URI:', redirectUri);
-  }, []);
+  const { handleGoogleSignIn } = useGoogleAuth();
 
-  // --- Facebook Login ---
-  const [requestFb, responseFb, promptAsyncFb] = Facebook.useAuthRequest({
-    clientId: '1544227193443135',
-    redirectUri: redirectUri,
-    scopes: ['public_profile', 'email'],
-  });
+  // --- Validation ---
+  const validateEmail = (value) => {
+    if (!value) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) return 'Invalid email format';
+    return '';
+  };
 
-  // --- Google Login ---
-  const [requestGoogle, responseGoogle, promptAsyncGoogle] = Google.useAuthRequest({
-    expoClientId: 'YOUR_EXPO_CLIENT_ID.apps.googleusercontent.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',      // required for standalone iOS
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com', // required for standalone Android
-    webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',        // required for Web
-    redirectUri: redirectUri,
-  });
+  const validatePassword = (value) => {
+    if (!value) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
+    return '';
+  };
 
-  // --- Handle Google Response ---
-  useEffect(() => {
-    if (responseGoogle?.type === 'success') {
-      const { authentication } = responseGoogle;
-      if (authentication?.idToken) {
-        const credential = GoogleAuthProvider.credential(authentication.idToken);
-        signInWithCredential(auth, credential)
-          .then((userCredential) => {
-            Alert.alert('✅ Logged in', `Welcome ${userCredential.user.email}`);
-          })
-          .catch((error) => Alert.alert('❌ Google Login Error', error.message));
-      }
-    }
-  }, [responseGoogle]);
-
-  // --- Handle Facebook Response ---
-  useEffect(() => {
-    if (responseFb?.type === 'success') {
-      const { authentication } = responseFb;
-      if (authentication?.accessToken) {
-        const credential = FacebookAuthProvider.credential(authentication.accessToken);
-        signInWithCredential(auth, credential)
-          .then((userCredential) => {
-            Alert.alert('✅ Logged in', `Welcome ${userCredential.user.displayName || userCredential.user.email}`);
-          })
-          .catch((error) => Alert.alert('❌ Facebook Login Error', error.message));
-      }
-    }
-  }, [responseFb]);
-
-  // --- Email & Password Login ---
+  // --- Email Login ---
   const handleEmailLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+
+    setEmailError(emailErr);
+    setPasswordError(passwordErr);
+
+    if (emailErr || passwordErr) return;
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('✅ Login Successful', `Welcome ${userCredential.user.email}`);
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.replace('UserLanding');
     } catch (error) {
-      Alert.alert('❌ Login Failed', error.message);
+      setPasswordError('Invalid email or password');
     }
   };
 
+  // --- Forgot Password ---
+  const handleForgotPassword = async () => {
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+    setPasswordError('');
+    setGoogleError('');
+    if (emailErr) return;
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setEmailError('✅ Password reset email sent. Check your inbox.');
+    } catch (error) {
+      setEmailError(error.message);
+    }
+  };
+const handleGoogleLogin = async () => {
+  setGoogleError('');
+  setIsLoading(true);
+
+  try {
+    const result = await handleGoogleSignIn();
+
+    if (result.success) {
+      navigation.replace('UserLanding');
+    } else {
+      setGoogleError(result.error || 'Google login failed.');
+    }
+  } catch (error) {
+    setGoogleError(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <LinearGradient colors={['#0e0e0e', '#1a1a1a']} style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image source={require('../assets/rev-logo.png')} style={styles.logo} />
-          <Text style={styles.logoText}>REV</Text>
-        </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <LinearGradient colors={['#1C2433', '#1C2433']} style={styles.container}>
+          {/* Back Button */}
+          <View style={styles.backButtonContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.navigate('RoleSelect')}
+            >
+              <Image
+                source={require('../assets/back.png')}
+                style={{ width: 24, height: 24, tintColor: '#fff' }}
+              />
+            </TouchableOpacity>
+          </View>
 
-        {/* Show redirect URI on screen */}
-        <Text style={{ color: 'yellow', margin: 10, fontSize: 12 }}>
-          Redirect URI: {redirectUri}
-        </Text>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image source={require('../assets/logo2.png')} style={styles.logo} />
+            <Text style={styles.logoText}>REV</Text>
+          </View>
 
-        {/* Email Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            placeholder="example@email.com"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            style={styles.input}
-          />
-        </View>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              placeholder="example@email.com"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                const err = validateEmail(text);
+                setEmailError(err);
+              }}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {emailError ? <Text style={styles.errorLabel}>{emailError}</Text> : null}
+          </View>
 
-        {/* Password Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            placeholder="********"
-            placeholderTextColor="#999"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-          />
-        </View>
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                placeholder="********"
+                placeholderTextColor="#999"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  const err = validatePassword(text);
+                  setPasswordError(err);
+                }}
+                style={styles.input}
+              />
+              <TouchableOpacity
+                style={{ position: 'absolute', right: 15, top: 14, zIndex: 10 }}
+                onPress={() => setShowPassword((prev) => !prev)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Image
+                  source={require('../assets/eye.png')}
+                  style={{ width: 22, height: 22, tintColor: '#888' }}
+                />
+              </TouchableOpacity>
+            </View>
+            {passwordError ? <Text style={styles.errorLabel}>{passwordError}</Text> : null}
+          </View>
 
-        <TouchableOpacity style={styles.forgotContainer}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
-        </TouchableOpacity>
+          {/* Forgot Password */}
+          <TouchableOpacity
+            style={styles.forgotContainer}
+            onPress={() => {
+              const emailErr = validateEmail(email);
+              setEmailError(emailErr);
+              setPasswordError('');
+              setGoogleError('');
 
-        {/* Email Login Button */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleEmailLogin}>
-          <Text style={styles.loginText}>Log in with Email</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.orText}>Or sign in with</Text>
-
-        {/* Social Login Buttons */}
-        <View style={styles.socialContainer}>
-          <TouchableOpacity style={styles.socialCircle} onPress={() => promptAsyncFb()}>
-            <Image source={require('../assets/facebook.png')} style={styles.socialIcon} />
+              if (!emailErr) {
+                navigation.navigate('ResetPassword', { email });
+              }
+            }}
+          >
+            <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialCircle} onPress={() => promptAsyncGoogle()}>
-            <Image source={require('../assets/google.png')} style={styles.socialIcon} />
-          </TouchableOpacity>
-        </View>
 
-        {/* Sign Up */}
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signupText}>
-            Don’t have an account? <Text style={styles.signupLink}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </LinearGradient>
-    </ScrollView>
+          {/* Email Login */}
+          <TouchableOpacity style={styles.loginButton} onPress={handleEmailLogin}>
+            <Text style={styles.loginText}>Log in with Email</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.orText}>Or sign in with</Text>
+
+          {/* Google Login */}
+          <View style={styles.socialContainer}>
+            <TouchableOpacity
+              style={styles.socialCircle}
+              onPress={handleGoogleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Image
+                  source={require('../assets/google.png')}
+                  style={styles.socialIcon}
+                />
+              )}
+            </TouchableOpacity>
+            {googleError ? <Text style={styles.errorLabel}>{googleError}</Text> : null}
+          </View>
+
+          {/* Sign Up */}
+          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+            <Text style={styles.signupText}>
+              Don’t have an account? <Text style={styles.signupLink}>Sign up</Text>
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

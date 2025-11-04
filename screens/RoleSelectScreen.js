@@ -2,29 +2,28 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+
 export default function RoleSelectScreen({ navigation }) {
   return (
-    <LinearGradient colors={['#0e0e0e', '#1a1a1a']} style={styles.container}>
+    <LinearGradient colors={['#1C2433', '#1C2433']} style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require('../assets/rev-logo.png')} style={styles.logo} />
+        <Image source={require('../assets/logo2.png')} style={styles.logo} />
         <Text style={styles.appName}>REV</Text>
       </View>
 
       <Text style={styles.title}>Continue as</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Login', { role: 'user' })}
-      >
-        <Text style={styles.buttonText}>User</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, styles.secondaryButton]}
-        onPress={() => navigation.navigate('Login', { role: 'mechanic' })}
-      >
-        <Text style={styles.buttonText}>Mechanic</Text>
-      </TouchableOpacity>
+      <View style={styles.rolesRow}>
+        <TouchableOpacity style={styles.roleButton} onPress={() => navigation.navigate('Login')}>
+          <Image source={require('../assets/user.png')} style={styles.roleIcon} />
+          <Text style={styles.roleText}>User</Text>
+        </TouchableOpacity>
+        <View style={{ width: 20 }} />
+        <TouchableOpacity style={styles.roleButton} onPress={() => navigation.navigate('MechanicLogin')}>
+          <Image source={require('../assets/mechanic.png')} style={styles.roleIcon} />
+          <Text style={styles.roleText}>Mechanic</Text>
+        </TouchableOpacity>
+      </View>
     </LinearGradient>
   );
 }
@@ -34,18 +33,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 120,
   },
   logoContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 30,
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  paddingTop: 70,
   },
   logo: {
     width: 90,
     height: 90,
-    marginBottom: 10,
+    marginRight: 10,
   },
   appName: {
-    color: '#ff4b2b',
+    color: '#fff',
     fontSize: 28,
     fontWeight: 'bold',
   },
@@ -54,20 +62,33 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 30,
   },
-  button: {
-    backgroundColor: '#ff4b2b',
-    width: '70%',
-    paddingVertical: 15,
-    borderRadius: 10,
+  rolesRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 10,
   },
-  secondaryButton: {
-    backgroundColor: '#2a2a2a',
+  roleButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 120,
+    height: 140,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#888',
   },
-  buttonText: {
+  roleIcon: {
+    width: 60,
+    height: 60,
+    marginBottom: 12,
+    resizeMode: 'contain',
+  },
+  roleText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

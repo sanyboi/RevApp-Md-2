@@ -1,9 +1,17 @@
 {
   "expo": {
+
     "scheme": "revapp",
+    "developmentClient": {
+      "hostUri": "tunnel"
+    },
     "name": "LoginSignupRev",
-    "slug": "LoginSignupRev",
+    "owner": "sanyboi1227",
+    "slug": "loginsignuprev",
     "version": "1.0.0",
+    "facebookScheme": "fb1544227193443135",
+    "facebookAdvertiserIDCollectionEnabled": true,
+    "facebookAutoLogAppEventsEnabled": true,
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,19 +21,56 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    
     "ios": {
+      "supportsTablet": true,
       "bundleIdentifier": "com.revapp.mobile",
       "googleServicesFile": "./GoogleService-Info.plist"
+      
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.revapp.mobile"
     },
-    "plugins": [
-      "expo-web-browser"
-    ]
+    
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+
+
+
+    "plugins": [ 
+       "expo-router",
+        [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.26598327907-rbt7iu1qrvvq295qrofnauod80trj6kqcom.googleusercontent.apps.GET_THE_IOS_URL_SCHEMA"
+        }
+      ],
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "facebookAppId": "1544227193443135",
+      "facebookAppName": "RevApp",
+      "router": {},
+      "eas": {
+        "projectId": "737cfb96-a348-4db1-b60d-9210244cef94"
+      }
+    }
   }
 }

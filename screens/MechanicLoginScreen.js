@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import styles from './SignUpStyles';
+import styles from './LoginStyles';
 
-export default function SignUpScreen({ navigation }) {
+export default function MechanicLoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [confirmError, setConfirmError] = useState('');
   const [generalError, setGeneralError] = useState('');
+    const [googleError, setGoogleError] = useState('');
 
   // --- Validation functions ---
   const validateEmail = (value) => {
@@ -27,30 +26,48 @@ export default function SignUpScreen({ navigation }) {
 
   const validatePassword = (value) => {
     if (!value) return 'Password is required';
-    if (value.length < 6) return 'Password must be at least 6 characters';
     return '';
   };
 
-  const handleSignUp = async () => {
-    // Reset previous errors
+  // --- Login handler ---
+  const handleMechanicLogin = async () => {
     setEmailError('');
     setPasswordError('');
-    setConfirmError('');
     setGeneralError('');
 
     const emailErr = validateEmail(email);
     const passwordErr = validatePassword(password);
-    const confirmErr = confirm !== password ? 'Passwords do not match' : '';
 
     setEmailError(emailErr);
     setPasswordError(passwordErr);
-    setConfirmError(confirmErr);
 
-    if (emailErr || passwordErr || confirmErr) return;
+    if (emailErr || passwordErr) return;
+
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Optionally verify user role here
+      navigation.replace('MechanicLanding');
+    } catch (error) {
+      setGeneralError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Forgot Password handler ---
+  const handleForgotPassword = async () => {
+    setEmailError('');
+    setPasswordError('');
+    setGeneralError('');
+
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+    if (emailErr) return;
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigation.navigate('Login');
+      await sendPasswordResetEmail(auth, email);
+      navigation.navigate('ResetPassword', { email }); // navigate to reset screen
     } catch (error) {
       setGeneralError(error.message);
     }
@@ -59,13 +76,25 @@ export default function SignUpScreen({ navigation }) {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <LinearGradient colors={['#1C2433', '#1C2433']} style={styles.container}>
+        {/* Back Button */}
+        <View style={styles.backButtonContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate('RoleSelect')}
+          >
+            <Image
+              source={require('../assets/back.png')}
+              style={{ width: 24, height: 24, tintColor: '#fff' }}
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image source={require('../assets/logo2.png')} style={styles.logo} />
-          <Text style={styles.logoText}>REV</Text>
+          <Text style={styles.logoText}>REV </Text>
+          <Text style={styles.logoText}> MECHANIC</Text>
         </View>
-
-        <Text style={styles.title}>Create Account</Text>
 
         {/* Email Input */}
         <View style={styles.inputGroup}>
@@ -73,12 +102,12 @@ export default function SignUpScreen({ navigation }) {
           <TextInput
             placeholder="example@email.com"
             placeholderTextColor="#666"
-            style={styles.input}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
               setEmailError(validateEmail(text));
             }}
+            style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -93,12 +122,12 @@ export default function SignUpScreen({ navigation }) {
               placeholder="••••••••"
               placeholderTextColor="#666"
               secureTextEntry={!showPassword}
-              style={styles.input}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
                 setPasswordError(validatePassword(text));
               }}
+              style={styles.input}
             />
             <TouchableOpacity
               style={{ position: 'absolute', right: 15, top: 14, zIndex: 10 }}
@@ -111,56 +140,42 @@ export default function SignUpScreen({ navigation }) {
           {passwordError ? <Text style={styles.errorLabel}>{passwordError}</Text> : null}
         </View>
 
-        {/* Confirm Password Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirm Password</Text>
-          <View style={{ position: 'relative' }}>
-            <TextInput
-              placeholder="••••••••"
-              placeholderTextColor="#666"
-              secureTextEntry={!showConfirm}
-              style={styles.input}
-              value={confirm}
-              onChangeText={(text) => {
-                setConfirm(text);
-                setConfirmError(text !== password ? 'Passwords do not match' : '');
-              }}
-            />
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 15, top: 14, zIndex: 10 }}
-              onPress={() => setShowConfirm((prev) => !prev)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Image source={require('../assets/eye.png')} style={{ width: 22, height: 22, tintColor: '#888' }} />
-            </TouchableOpacity>
-          </View>
-          {confirmError ? <Text style={styles.errorLabel}>{confirmError}</Text> : null}
-        </View>
+               {/* Forgot Password */}
+              <TouchableOpacity
+          style={styles.forgotContainer}
+          onPress={() => {
+            // Validate email first
+            const emailErr = validateEmail(email);
+            setEmailError(emailErr);
+            setPasswordError(''); // clear password error
+            setGoogleError(''); // clear Google error
+        
+            if (!emailErr) {
+              // Only navigate if email is valid
+              navigation.navigate('ResetPassMech', { email });
+            }
+          }}
+        >
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
 
-        {/* General Firebase error */}
+        {/* General Error */}
         {generalError ? <Text style={styles.errorLabel}>{generalError}</Text> : null}
 
-        {/* Sign Up Button */}
-        <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
-          <Text style={styles.signupButtonText}>Create Account</Text>
+        {/* Login Button */}
+        <TouchableOpacity
+          style={[styles.loginButton, { marginTop: 20 }]}
+          onPress={handleMechanicLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.loginText}>Login as Mechanic</Text>
+          )}
         </TouchableOpacity>
 
-        {/* Login Link */}
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.loginText}>
-            Already have an account? <Text style={styles.loginLink}>Log In</Text>
-          </Text>
-        </TouchableOpacity>
-
-        {/* Terms and Conditions */}
-        <View style={styles.termsContainer}>
-          <Text style={styles.termsText}>
-            By signing up, you agree to our{' '}
-            <Text style={styles.termsLink}>Terms of Service</Text>
-            {' '}and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text>
-        </View>
+        
       </LinearGradient>
     </ScrollView>
   );
